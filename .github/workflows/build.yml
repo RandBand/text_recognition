@@ -34,7 +34,7 @@ jobs:
         python -m pytest tests/ -v --cov=src --cov-report=xml
     
     - name: 上传覆盖率报告
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -81,7 +81,7 @@ jobs:
           run_server.py
     
     - name: 上传macOS ${{ matrix.architecture }} 构建产物
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ocr-server-macos-${{ matrix.architecture }}
         path: dist/ocr_server_macos_${{ matrix.architecture }}
@@ -121,7 +121,7 @@ jobs:
           run_server.py
     
     - name: 上传Windows ${{ matrix.architecture }} 构建产物
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ocr-server-windows-${{ matrix.architecture }}
         path: dist/ocr_server_windows_${{ matrix.architecture }}.exe
@@ -167,7 +167,7 @@ jobs:
           run_server.py
     
     - name: 上传Linux ${{ matrix.architecture }} 构建产物
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ocr-server-linux-${{ matrix.architecture }}
         path: dist/ocr_server_linux_${{ matrix.architecture }}
@@ -179,7 +179,7 @@ jobs:
     
     steps:
     - name: 下载所有构建产物
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
     
     - name: 创建发布包
       run: |
