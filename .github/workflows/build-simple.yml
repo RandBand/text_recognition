@@ -76,6 +76,7 @@ jobs:
         pip install pyinstaller
     
     - name: 构建Windows ${{ matrix.architecture }} 包
+      shell: cmd
       run: |
         pyinstaller --onefile ^
           --add-data "models;models" ^
