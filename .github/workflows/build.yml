@@ -70,17 +70,7 @@ jobs:
           export ARCHFLAGS="-arch x86_64"
         fi
         
-        pyinstaller --onefile \
-          --add-data "models:models" \
-          --add-data "assets:assets" \
-          --hidden-import cv2 \
-          --hidden-import numpy \
-          --hidden-import PIL \
-          --hidden-import onnxruntime \
-          --hidden-import shapely \
-          --hidden-import pyclipper \
-          --name "ocr_server_macos_${{ matrix.architecture }}" \
-          run_server.py
+        pyinstaller ocr_server.spec --name "ocr_server_macos_${{ matrix.architecture }}"
     
     - name: 上传macOS ${{ matrix.architecture }} 构建产物
       uses: actions/upload-artifact@v4
@@ -112,17 +102,7 @@ jobs:
     - name: 构建Windows ${{ matrix.architecture }} 包
       shell: cmd
       run: |
-        pyinstaller --onefile ^
-          --add-data "models;models" ^
-          --add-data "assets;assets" ^
-          --hidden-import cv2 ^
-          --hidden-import numpy ^
-          --hidden-import PIL ^
-          --hidden-import onnxruntime ^
-          --hidden-import shapely ^
-          --hidden-import pyclipper ^
-          --name "ocr_server_windows_${{ matrix.architecture }}" ^
-          run_server.py
+        pyinstaller ocr_server.spec --name "ocr_server_windows_${{ matrix.architecture }}"
     
     - name: 上传Windows ${{ matrix.architecture }} 构建产物
       uses: actions/upload-artifact@v4
@@ -159,17 +139,7 @@ jobs:
           export ARCHFLAGS="-arch x86_64"
         fi
         
-        pyinstaller --onefile \
-          --add-data "models:models" \
-          --add-data "assets:assets" \
-          --hidden-import cv2 \
-          --hidden-import numpy \
-          --hidden-import PIL \
-          --hidden-import onnxruntime \
-          --hidden-import shapely \
-          --hidden-import pyclipper \
-          --name "ocr_server_linux_${{ matrix.architecture }}" \
-          run_server.py
+        pyinstaller ocr_server.spec --name "ocr_server_linux_${{ matrix.architecture }}"
     
     - name: 上传Linux ${{ matrix.architecture }} 构建产物
       uses: actions/upload-artifact@v4
