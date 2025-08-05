@@ -20,6 +20,8 @@ wheels/
 *.egg
 MANIFEST
 
+build/build_optimized/
+
 # PyInstaller
 *.manifest
 
