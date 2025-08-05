@@ -317,15 +317,9 @@ def create_package_structure():
         else:
             print(f"字体文件未找到: {src}")
     
-    # 复制图片文件
-    if os.path.exists('assets/images'):
-        shutil.copytree('assets/images', f"{package_dir}/assets/images", dirs_exist_ok=True)
-        print(f"已复制图片文件")
     
     # 复制文档文件
     doc_files = [
-        ('docs/README.md', f"{package_dir}/docs/README.md"),
-        ('docs/USAGE_GUIDE.md', f"{package_dir}/docs/USAGE_GUIDE.md"),
         ('requirements.txt', f"{package_dir}/requirements.txt"),
     ]
     
