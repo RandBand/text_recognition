@@ -13,6 +13,8 @@ import numpy as np
 import io
 import argparse
 import sys
+import platform
+import os
 from PIL import Image
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -25,6 +27,54 @@ from src.utils.config import (
     SUCCESS_RESPONSE, ERROR_RESPONSE,
     REQUEST_TIMEOUT, LOG_FORMAT
 )
+
+# 导入编码处理模块
+try:
+    from src.utils.encoding_utils import setup_windows_encoding
+    setup_windows_encoding()
+except ImportError:
+    # 如果无法导入，使用内联的编码处理
+    if platform.system() == 'Windows':
+        import codecs
+        import locale
+        
+        # 尝试设置控制台编码为UTF-8
+        try:
+            # 设置环境变量
+            os.environ['PYTHONIOENCODING'] = 'utf-8'
+            
+            # 重新配置stdout和stderr
+            if hasattr(sys.stdout, 'detach'):
+                sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+            if hasattr(sys.stderr, 'detach'):
+                sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
+            
+            # 设置locale
+            if hasattr(locale, 'setlocale'):
+                try:
+                    locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+                except locale.Error:
+                    try:
+                        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+                    except locale.Error:
+                        pass
+        except Exception:
+            # 如果设置失败，使用安全的打印函数
+            def safe_print(*args, **kwargs):
+                try:
+                    print(*args, **kwargs)
+                except UnicodeEncodeError:
+                    # 如果出现编码错误，尝试使用ASCII编码
+                    for arg in args:
+                        try:
+                            print(str(arg).encode('ascii', 'replace').decode('ascii'), end=' ')
+                        except:
+                            print('[编码错误]', end=' ')
+                    print()
+            
+            # 替换print函数
+            import builtins
+            builtins.print = safe_print
 
 class OCRRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
