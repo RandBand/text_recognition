@@ -30,6 +30,10 @@ jobs:
         pip install --only-binary=all -r models/requirements.txt
         pip install pyinstaller
     
+    - name: 运行优化构建脚本
+      run: |
+        python build/scripts/build_optimized.py
+    
     - name: 构建macOS ${{ matrix.architecture }} 包
       run: |
         if [ "${{ matrix.architecture }}" = "arm64" ]; then
@@ -38,13 +42,18 @@ jobs:
           export ARCHFLAGS="-arch x86_64"
         fi
         
-        pyinstaller ocr_server.spec --name "ocr_server_macos_${{ matrix.architecture }}"
+        # 使用build文件夹内的优化配置
+        pyinstaller --clean \
+          --distpath dist/packages \
+          --workpath build/build_optimized \
+          build/configs/ocr_server_optimized.spec \
+          --name "ocr_server_macos_${{ matrix.architecture }}"
     
     - name: 上传macOS ${{ matrix.architecture }} 构建产物
       uses: actions/upload-artifact@v4
       with:
         name: ocr-server-macos-${{ matrix.architecture }}
-        path: dist/ocr_server_macos_${{ matrix.architecture }}
+        path: dist/packages/ocr_server_macos_${{ matrix.architecture }}
 
   build-windows:
     runs-on: windows-latest
@@ -67,16 +76,25 @@ jobs:
         pip install --only-binary=all -r models/requirements.txt
         pip install pyinstaller
     
+    - name: 运行优化构建脚本
+      run: |
+        python build/scripts/build_optimized.py
+    
     - name: 构建Windows ${{ matrix.architecture }} 包
       shell: cmd
       run: |
-        pyinstaller ocr_server.spec --name "ocr_server_windows_${{ matrix.architecture }}"
+        # 使用build文件夹内的优化配置
+        pyinstaller --clean ^
+          --distpath dist/packages ^
+          --workpath build/build_optimized ^
+          build/configs/ocr_server_optimized.spec ^
+          --name "ocr_server_windows_${{ matrix.architecture }}"
     
     - name: 上传Windows ${{ matrix.architecture }} 构建产物
       uses: actions/upload-artifact@v4
       with:
         name: ocr-server-windows-${{ matrix.architecture }}
-        path: dist/ocr_server_windows_${{ matrix.architecture }}.exe
+        path: dist/packages/ocr_server_windows_${{ matrix.architecture }}.exe
 
   create-release:
     needs: [build-macos, build-windows]
