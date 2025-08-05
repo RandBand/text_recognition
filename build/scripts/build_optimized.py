@@ -120,29 +120,29 @@ exe = EXE(
     with open('build/configs/ocr_server_optimized.spec', 'w', encoding='utf-8') as f:
         f.write(spec_content)
     
-    print("✅ 创建优化配置文件: build/configs/ocr_server_optimized.spec")
+            print("创建优化配置文件: build/configs/ocr_server_optimized.spec")
 
 def install_upx():
     """安装UPX压缩工具"""
-    print("📦 检查UPX压缩工具...")
+    print("检查UPX压缩工具...")
     
     # 检查UPX是否已安装
     try:
         subprocess.run(['upx', '--version'], capture_output=True, check=True)
-        print("✅ UPX已安装")
+        print("UPX已安装")
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("⚠️  UPX未安装，将跳过二进制压缩")
+        print("UPX未安装，将跳过二进制压缩")
         return False
 
 def build_optimized():
     """构建优化的可执行文件"""
-    print("🔨 开始构建优化版本...")
+    print("开始构建优化版本...")
     
     # 切换到项目根目录
     project_root = os.path.join(os.path.dirname(__file__), '..', '..')
     os.chdir(project_root)
-    print(f"📁 切换到项目根目录: {os.getcwd()}")
+    print(f"切换到项目根目录: {os.getcwd()}")
     
     # 使用优化配置构建
     result = subprocess.run([
@@ -154,16 +154,16 @@ def build_optimized():
     ], capture_output=True, text=True)
     
     if result.returncode == 0:
-        print("✅ 优化构建成功!")
+        print("优化构建成功!")
         return True
     else:
-        print("❌ 构建失败:")
+        print("构建失败:")
         print(result.stderr)
         return False
 
 def create_minimal_package():
     """创建最小化分发包"""
-    print("📦 创建最小化分发包...")
+    print("创建最小化分发包...")
     
     dist_dir = Path("dist/packages/ocr_minimal")
     dist_dir.mkdir(exist_ok=True)
@@ -191,7 +191,7 @@ def create_minimal_package():
     # 创建启动脚本
     create_minimal_startup_script(dist_dir)
     
-    print(f"✅ 最小化分发包创建完成: {dist_dir}")
+    print(f"最小化分发包创建完成: {dist_dir}")
     return dist_dir
 
 def create_minimal_startup_script(dist_dir):
@@ -246,7 +246,7 @@ def analyze_size():
     if not dist_dir.exists():
         return
     
-    print("\n📊 包大小分析:")
+    print("\n包大小分析:")
     total_size = 0
     
     for file in dist_dir.rglob('*'):
@@ -255,16 +255,16 @@ def analyze_size():
             total_size += size
             print(f"  {file.name}: {size / 1024 / 1024:.2f} MB")
     
-    print(f"\n📦 总大小: {total_size / 1024 / 1024:.2f} MB")
+    print(f"\n总大小: {total_size / 1024 / 1024:.2f} MB")
 
 def main():
     """主函数"""
-    print("🚀 OCR项目优化打包工具")
+    print("OCR项目优化打包工具")
     print("=" * 50)
     
     try:
         # 1. 安装PyInstaller
-        print("📦 安装PyInstaller...")
+        print("安装PyInstaller...")
         subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"], check=True)
         
         # 2. 检查UPX
@@ -278,18 +278,18 @@ def main():
             # 5. 创建最小化分发包
             dist_dir = create_minimal_package()
             
-            print("\n🎉 优化打包完成!")
-            print(f"📁 分发包位置: {dist_dir}")
+            print("\n优化打包完成!")
+            print(f"分发包位置: {dist_dir}")
             
             # 6. 分析包大小
             analyze_size()
             
         else:
-            print("❌ 构建失败")
+            print("构建失败")
             return 1
             
     except Exception as e:
-        print(f"❌ 打包过程中出现错误: {e}")
+        print(f"打包过程中出现错误: {e}")
         return 1
     
     return 0
