@@ -13,8 +13,8 @@ import subprocess
 from pathlib import Path
 
 def create_optimized_spec():
-    """创建优化的spec文件"""
-    # 根据平台确定可执行文件名称
+    """Create optimized spec file"""
+    # Determine executable name based on platform
     import platform
     system = platform.system().lower()
     machine = platform.machine().lower()
@@ -28,7 +28,7 @@ def create_optimized_spec():
 
 block_cipher = None
 
-# 只包含必要的模型文件
+# Only include necessary model files
 datas = [
     ('../../models/det.onnx', '.'),
     ('../../models/rec.onnx', '.'),
@@ -36,7 +36,7 @@ datas = [
     ('../../assets/fonts/simfang.ttf', '.'),
 ]
 
-# 精确的隐藏导入，避免不必要的模块
+# Precise hidden imports to avoid unnecessary modules
 hiddenimports = [
     'cv2',
     'numpy.core._methods',
@@ -59,7 +59,7 @@ hiddenimports = [
     'glob'
 ]
 
-# 排除大量不必要的模块
+# Exclude unnecessary modules
 excludes = [
     'matplotlib', 'scipy', 'pandas', 'jupyter', 'IPython', 'notebook',
     'tornado', 'zmq', 'tkinter', 'PyQt5', 'PySide2', 'wx', 'PyQt4',
@@ -130,35 +130,35 @@ exe = EXE(
     with open('build/configs/ocr_server_optimized.spec', 'w', encoding='utf-8') as f:
         f.write(spec_content)
     
-    print("创建优化配置文件: build/configs/ocr_server_optimized.spec")
+    print("Created optimized config file: build/configs/ocr_server_optimized.spec")
 
 def install_upx():
-    """安装UPX压缩工具"""
-    print("检查UPX压缩工具...")
+    """Install UPX compression tool"""
+    print("Checking UPX compression tool...")
     
-    # 检查UPX是否已安装
+    # Check if UPX is installed
     try:
         subprocess.run(['upx', '--version'], capture_output=True, check=True)
-        print("UPX已安装")
+        print("UPX installed")
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("UPX未安装，将跳过二进制压缩")
+        print("UPX not installed, will skip binary compression")
         return False
 
 def build_optimized():
-    """构建优化的可执行文件"""
-    print("开始构建优化版本...")
+    """Build optimized executable"""
+    print("Starting optimized build...")
     
-    # 切换到项目根目录
+    # Switch to project root directory
     project_root = os.path.join(os.path.dirname(__file__), '..', '..')
     os.chdir(project_root)
-    print(f"切换到项目根目录: {os.getcwd()}")
+    print(f"Switched to project root: {os.getcwd()}")
     
-    # 确保构建目录存在
+    # Ensure build directories exist
     os.makedirs('build/configs', exist_ok=True)
     os.makedirs('dist/packages', exist_ok=True)
     
-    # 使用优化配置构建
+    # Build with optimized config
     result = subprocess.run([
         'pyinstaller',
         '--clean',
@@ -168,25 +168,25 @@ def build_optimized():
     ], capture_output=True, text=True)
     
     if result.returncode == 0:
-        print("优化构建成功!")
+        print("Optimized build successful!")
         return True
     else:
-        print("构建失败:")
+        print("Build failed:")
         print(result.stderr)
         return False
 
 def create_minimal_package():
-    """创建最小化分发包"""
-    print("创建最小化分发包...")
+    """Create minimal distribution package"""
+    print("Creating minimal distribution package...")
     
     dist_dir = Path("dist/packages/ocr_minimal")
     dist_dir.mkdir(exist_ok=True)
     
-    # 复制可执行文件
+    # Copy executable file
     if os.path.exists("dist/packages/ocr_server"):
         shutil.copy2("dist/packages/ocr_server", dist_dir / "ocr_server")
     
-    # 只复制必要的模型文件
+    # Only copy essential model files
     essential_files = [
         "models/det.onnx",
         "models/rec.onnx", 
@@ -196,20 +196,20 @@ def create_minimal_package():
     
     for file in essential_files:
         if os.path.exists(file):
-            # 创建目标目录
+            # Create target directory
             target_dir = dist_dir / os.path.dirname(file)
             target_dir.mkdir(parents=True, exist_ok=True)
-            # 复制文件
+            # Copy file
             shutil.copy2(file, dist_dir / file)
     
-    # 创建启动脚本
+    # Create startup script
     create_minimal_startup_script(dist_dir)
     
-    print(f"最小化分发包创建完成: {dist_dir}")
+    print(f"Minimal distribution package created: {dist_dir}")
     return dist_dir
 
 def create_minimal_startup_script(dist_dir):
-    """创建最小化启动脚本"""
+    """Create minimal startup script"""
     if sys.platform.startswith('win'):
         script_content = '''@echo off
 echo OCR服务器启动中...
@@ -255,12 +255,12 @@ fi
         os.chmod(script_path, 0o755)
 
 def analyze_size():
-    """分析包大小"""
+    """Analyze package size"""
     dist_dir = Path("dist/packages/ocr_minimal")
     if not dist_dir.exists():
         return
     
-    print("\n包大小分析:")
+    print("\nPackage size analysis:")
     total_size = 0
     
     for file in dist_dir.rglob('*'):
@@ -269,20 +269,33 @@ def analyze_size():
             total_size += size
             print(f"  {file.name}: {size / 1024 / 1024:.2f} MB")
     
-    print(f"\n总大小: {total_size / 1024 / 1024:.2f} MB")
+    print(f"\nTotal size: {total_size / 1024 / 1024:.2f} MB")
 
 def main():
     """主函数"""
-    print("OCR项目优化打包工具")
+    # 设置控制台编码以支持中文输出
+    import locale
+    import sys
+    
+    # 在Windows上设置控制台编码
+    if sys.platform.startswith('win'):
+        try:
+            import codecs
+            sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+            sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
+        except:
+            pass
+    
+    print("OCR Project Optimization Tool")
     print("=" * 50)
     
     try:
         # 1. 安装PyInstaller (如果未安装)
         try:
             import PyInstaller
-            print("PyInstaller已安装")
+            print("PyInstaller installed")
         except ImportError:
-            print("安装PyInstaller...")
+            print("Installing PyInstaller...")
             subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"], check=True)
         
         # 2. 检查UPX
@@ -293,25 +306,25 @@ def main():
         
         # 4. 构建优化版本
         if build_optimized():
-            print("\n优化构建完成!")
-            print("可执行文件位置: dist/packages/")
+            print("\nOptimization build completed!")
+            print("Executable location: dist/packages/")
             
             # 在CI环境中跳过创建最小化分发包
             if not os.getenv('CI'):
                 # 5. 创建最小化分发包
                 dist_dir = create_minimal_package()
                 
-                print(f"分发包位置: {dist_dir}")
+                print(f"Package location: {dist_dir}")
                 
                 # 6. 分析包大小
                 analyze_size()
             
         else:
-            print("构建失败")
+            print("Build failed")
             return 1
             
     except Exception as e:
-        print(f"打包过程中出现错误: {e}")
+        print(f"Error during packaging: {e}")
         return 1
     
     return 0

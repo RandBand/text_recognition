@@ -2,7 +2,7 @@
 
 block_cipher = None
 
-# 只包含必要的模型文件
+# Only include necessary model files
 datas = [
     ('../../models/det.onnx', '.'),
     ('../../models/rec.onnx', '.'),
@@ -10,7 +10,7 @@ datas = [
     ('../../assets/fonts/simfang.ttf', '.'),
 ]
 
-# 精确的隐藏导入，避免不必要的模块
+# Precise hidden imports to avoid unnecessary modules
 hiddenimports = [
     'cv2',
     'numpy.core._methods',
@@ -33,7 +33,7 @@ hiddenimports = [
     'glob'
 ]
 
-# 排除大量不必要的模块
+# Exclude unnecessary modules
 excludes = [
     'matplotlib', 'scipy', 'pandas', 'jupyter', 'IPython', 'notebook',
     'tornado', 'zmq', 'tkinter', 'PyQt5', 'PySide2', 'wx', 'PyQt4',
