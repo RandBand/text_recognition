@@ -1,0 +1,168 @@
+name: 构建多平台OCR服务器包
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送版本标签时触发
+  workflow_dispatch:  # 允许手动触发
+    inputs:
+      version:
+        description: '版本号 (例如: 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+env:
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  # 使用矩阵构建多平台包
+  build-packages:
+    name: 构建 ${{ matrix.os }} ${{ matrix.arch }} 包
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false  # 一个平台失败不影响其他平台
+      matrix:
+        include:
+          - os: macOS
+            arch: ARM64
+            runs-on: macos-latest
+            build-dir: macos-arm64
+            exe-name: ocr_server_arm64
+            package-name: ocr_server_macos_arm64
+            package-ext: tar.gz
+            
+          - os: macOS
+            arch: x86_64
+            runs-on: macos-12
+            build-dir: macos-x86_64
+            exe-name: ocr_server_x86_64
+            package-name: ocr_server_macos_x86_64
+            package-ext: tar.gz
+            
+          - os: Windows
+            arch: x64
+            runs-on: windows-latest
+            build-dir: windows-x64
+            exe-name: ocr_server_x64.exe
+            package-name: ocr_server_windows_x64
+            package-ext: zip
+            
+          - os: Windows
+            arch: ARM64
+            runs-on: windows-latest
+            build-dir: windows-arm64
+            exe-name: ocr_server_arm64.exe
+            package-name: ocr_server_windows_arm64
+            package-ext: zip
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: 安装系统依赖 (macOS)
+        if: matrix.os == 'macOS'
+        run: |
+          # 安装Homebrew包管理器
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          # 安装必要的系统库
+          brew install pkg-config
+          
+      - name: 安装Python依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: 创建构建目录
+        run: |
+          mkdir -p build/${{ matrix.build-dir }}
+          
+      - name: 构建可执行文件
+        run: |
+          # 使用优化构建脚本
+          python build/scripts/build_optimized.py
+          
+          # 重命名可执行文件
+          if [ -f "dist/packages/ocr_server" ]; then
+            mkdir -p build/${{ matrix.build-dir }}
+            cp dist/packages/ocr_server build/${{ matrix.build-dir }}/${{ matrix.exe-name }}
+          fi
+        if: matrix.os == 'macOS'
+          
+      - name: 构建可执行文件 (Windows)
+        run: |
+          # 使用优化构建脚本
+          python build/scripts/build_optimized.py
+          
+          # 重命名可执行文件
+          if (Test-Path "dist/packages/ocr_server.exe") {
+            New-Item -ItemType Directory -Force -Path "build/${{ matrix.build-dir }}"
+            Copy-Item "dist/packages/ocr_server.exe" "build/${{ matrix.build-dir }}/${{ matrix.exe-name }}"
+          }
+        if: matrix.os == 'Windows'
+          
+      - name: 创建发布包 (macOS)
+        run: |
+          cd build/${{ matrix.build-dir }}
+          tar -czf ${{ matrix.package-name }}_${{ github.event.inputs.version || github.ref_name }}.${{ matrix.package-ext }} ${{ matrix.exe-name }}
+        if: matrix.os == 'macOS'
+          
+      - name: 创建发布包 (Windows)
+        run: |
+          cd build\${{ matrix.build-dir }}
+          powershell Compress-Archive -Path ${{ matrix.exe-name }} -DestinationPath ${{ matrix.package-name }}_${{ github.event.inputs.version || github.ref_name }}.${{ matrix.package-ext }}
+        if: matrix.os == 'Windows'
+          
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocr-server-${{ matrix.build-dir }}
+          path: build/${{ matrix.build-dir }}/${{ matrix.package-name }}_${{ github.event.inputs.version || github.ref_name }}.${{ matrix.package-ext }}
+          retention-days: 30
+
+  # 创建GitHub Release
+  create-release:
+    name: 创建GitHub Release
+    needs: [build-packages]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: 下载所有构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          
+      - name: 创建Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/ocr-server-macos-arm64/ocr_server_macos_arm64_${{ github.ref_name }}.tar.gz
+            artifacts/ocr-server-macos-x86_64/ocr_server_macos_x86_64_${{ github.ref_name }}.tar.gz
+            artifacts/ocr-server-windows-x64/ocr_server_windows_x64_${{ github.ref_name }}.zip
+            artifacts/ocr-server-windows-arm64/ocr_server_windows_arm64_${{ github.ref_name }}.zip
+          body: |
+            ## OCR服务器多平台发布包
+            
+            ### 支持的平台和架构：
+            - **macOS ARM64** (Apple Silicon): `ocr_server_macos_arm64_${{ github.ref_name }}.tar.gz`
+            - **macOS x86_64** (Intel): `ocr_server_macos_x86_64_${{ github.ref_name }}.tar.gz`
+            - **Windows x64** (Intel/AMD): `ocr_server_windows_x64_${{ github.ref_name }}.zip`
+            - **Windows ARM64**: `ocr_server_windows_arm64_${{ github.ref_name }}.zip`
+            
+            ### 使用说明：
+            1. 下载对应平台的压缩包
+            2. 解压到本地目录
+            3. 在命令行中运行可执行文件
+            4. 默认服务端口为5000
+            
+            ### 构建信息：
+            - Python版本: ${{ env.PYTHON_VERSION }}
+            - PyInstaller版本: 5.13.2
+            - 构建时间: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

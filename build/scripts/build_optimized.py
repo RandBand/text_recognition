@@ -14,7 +14,17 @@ from pathlib import Path
 
 def create_optimized_spec():
     """创建优化的spec文件"""
-    spec_content = '''# -*- mode: python ; coding: utf-8 -*-
+    # 根据平台确定可执行文件名称
+    import platform
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    
+    if system == "windows":
+        exe_name = "ocr_server.exe"
+    else:
+        exe_name = "ocr_server"
+    
+    spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
 
@@ -83,7 +93,7 @@ a = Analysis(
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
-    hooksconfig={},
+    hooksconfig={{}},
     runtime_hooks=[],
     excludes=excludes,
     win_no_prefer_redirects=False,
@@ -101,7 +111,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='ocr_server',
+    name='{exe_name}',
     debug=False,
     bootloader_ignore_signals=False,
     strip=True,  # 去除调试信息
@@ -143,6 +153,10 @@ def build_optimized():
     project_root = os.path.join(os.path.dirname(__file__), '..', '..')
     os.chdir(project_root)
     print(f"切换到项目根目录: {os.getcwd()}")
+    
+    # 确保构建目录存在
+    os.makedirs('build/configs', exist_ok=True)
+    os.makedirs('dist/packages', exist_ok=True)
     
     # 使用优化配置构建
     result = subprocess.run([
@@ -263,9 +277,13 @@ def main():
     print("=" * 50)
     
     try:
-        # 1. 安装PyInstaller
-        print("安装PyInstaller...")
-        subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"], check=True)
+        # 1. 安装PyInstaller (如果未安装)
+        try:
+            import PyInstaller
+            print("PyInstaller已安装")
+        except ImportError:
+            print("安装PyInstaller...")
+            subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"], check=True)
         
         # 2. 检查UPX
         install_upx()
@@ -275,14 +293,18 @@ def main():
         
         # 4. 构建优化版本
         if build_optimized():
-            # 5. 创建最小化分发包
-            dist_dir = create_minimal_package()
+            print("\n优化构建完成!")
+            print("可执行文件位置: dist/packages/")
             
-            print("\n优化打包完成!")
-            print(f"分发包位置: {dist_dir}")
-            
-            # 6. 分析包大小
-            analyze_size()
+            # 在CI环境中跳过创建最小化分发包
+            if not os.getenv('CI'):
+                # 5. 创建最小化分发包
+                dist_dir = create_minimal_package()
+                
+                print(f"分发包位置: {dist_dir}")
+                
+                # 6. 分析包大小
+                analyze_size()
             
         else:
             print("构建失败")
