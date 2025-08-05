@@ -120,7 +120,7 @@ exe = EXE(
     with open('build/configs/ocr_server_optimized.spec', 'w', encoding='utf-8') as f:
         f.write(spec_content)
     
-            print("创建优化配置文件: build/configs/ocr_server_optimized.spec")
+    print("创建优化配置文件: build/configs/ocr_server_optimized.spec")
 
 def install_upx():
     """安装UPX压缩工具"""
