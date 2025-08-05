@@ -216,7 +216,7 @@ exe = EXE(
     with open('build/configs/ocr_server_universal.spec', 'w', encoding='utf-8') as f:
         f.write(spec_content)
     
-    print("✅ 已创建通用优化的spec配置文件")
+    print("已创建通用优化的spec配置文件")
     return tools
 
 def create_package_structure():
@@ -238,9 +238,9 @@ def create_package_structure():
     
     if os.path.exists(exe_path):
         shutil.copy2(exe_path, f"{package_dir}/{exe_name}")
-        print(f"✅ 已复制可执行文件: {exe_name}")
+        print(f"已复制可执行文件: {exe_name}")
     else:
-        print(f"❌ 可执行文件未找到: {exe_path}")
+        print(f"可执行文件未找到: {exe_path}")
         return False
     
     # 复制模型文件
@@ -253,9 +253,9 @@ def create_package_structure():
     for src, dst in model_files:
         if os.path.exists(src):
             shutil.copy2(src, dst)
-            print(f"✅ 已复制模型文件: {src}")
+            print(f"已复制模型文件: {src}")
         else:
-            print(f"⚠️  模型文件未找到: {src}")
+            print(f"模型文件未找到: {src}")
     
     # 复制字体文件
     font_files = [
@@ -265,14 +265,14 @@ def create_package_structure():
     for src, dst in font_files:
         if os.path.exists(src):
             shutil.copy2(src, dst)
-            print(f"✅ 已复制字体文件: {src}")
+            print(f"已复制字体文件: {src}")
         else:
-            print(f"⚠️  字体文件未找到: {src}")
+            print(f"字体文件未找到: {src}")
     
     # 复制图片文件
     if os.path.exists('assets/images'):
         shutil.copytree('assets/images', f"{package_dir}/assets/images", dirs_exist_ok=True)
-        print(f"✅ 已复制图片文件")
+        print(f"已复制图片文件")
     
     # 复制文档文件
     doc_files = [
@@ -284,9 +284,9 @@ def create_package_structure():
     for src, dst in doc_files:
         if os.path.exists(src):
             shutil.copy2(src, dst)
-            print(f"✅ 已复制文档文件: {src}")
+            print(f"已复制文档文件: {src}")
         else:
-            print(f"⚠️  文档文件未找到: {src}")
+            print(f"文档文件未找到: {src}")
     
     # 创建启动脚本
     create_startup_scripts(package_dir, exe_name)
@@ -312,7 +312,7 @@ pause
 '''
         with open(f"{package_dir}/start_server.bat", 'w', encoding='utf-8') as f:
             f.write(bat_content)
-        print(f"✅ 已创建Windows启动脚本: start_server.bat")
+        print(f"已创建Windows启动脚本: start_server.bat")
     
     # Unix/Linux/macOS shell脚本
     shell_content = f'''#!/bin/bash
@@ -334,56 +334,56 @@ echo "启动服务器..."
     if platform.system() != 'Windows':
         os.chmod(f"{package_dir}/start_server.sh", 0o755)
     
-    print(f"✅ 已创建Unix启动脚本: start_server.sh")
+    print(f"已创建Unix启动脚本: start_server.sh")
 
 def main():
     """主构建流程"""
-    print("🚀 OCR项目通用打包工具")
+    print("OCR项目通用打包工具")
     print("=" * 50)
     
     # 检查当前目录
     if not os.path.exists('run_server.py'):
-        print("❌ 错误：请在项目根目录运行此脚本")
+        print("  错误：请在项目根目录运行此脚本")
         return 1
     
     # 系统信息
-    print(f"📋 系统信息:")
+    print(f"系统信息:")
     print(f"   操作系统: {platform.system()} {platform.release()}")
     print(f"   Python版本: {sys.version}")
     print(f"   架构: {platform.machine()}")
     
     # 检查工具可用性
-    print(f"\n🔧 工具检查:")
+    print(f"\n工具检查:")
     tools = create_universal_spec()
     
-    print(f"   UPX压缩工具: {'✅ 可用' if tools.get('upx', False) else '❌ 不可用'}")
-    print(f"   Strip工具: {'✅ 可用' if tools.get('strip', False) else '❌ 不可用'}")
+    print(f"   UPX压缩工具: {'可用' if tools.get('upx', False) else '不可用'}")
+    print(f"   Strip工具: {'可用' if tools.get('strip', False) else '不可用'}")
     
     # 检查PyInstaller
     try:
         import PyInstaller
-        print(f"✅ PyInstaller已安装: {PyInstaller.__version__}")
+        print(f"PyInstaller已安装: {PyInstaller.__version__}")
     except ImportError:
-        print("❌ PyInstaller未安装，请运行: pip install pyinstaller")
+        print("PyInstaller未安装，请运行: pip install pyinstaller")
         return 1
     
     # 检查numpy
     try:
         import numpy
-        print(f"✅ NumPy已安装: {numpy.__version__}")
+        print(f"NumPy已安装: {numpy.__version__}")
     except ImportError:
-        print("❌ NumPy未安装，请运行: pip install numpy")
+        print("NumPy未安装，请运行: pip install numpy")
         return 1
     
     # 清理之前的构建
-    print(f"\n🧹 清理之前的构建...")
+    print(f"\n清理之前的构建...")
     if os.path.exists('build/build_universal'):
         shutil.rmtree('build/build_universal')
     if os.path.exists('dist'):
         shutil.rmtree('dist')
     
     # 开始构建
-    print(f"\n🔨 开始构建...")
+    print(f"\n开始构建...")
     try:
         cmd = [
             sys.executable, '-m', 'PyInstaller',
@@ -396,12 +396,12 @@ def main():
         print(f"执行命令: {' '.join(cmd)}")
         result = subprocess.run(cmd, check=True, capture_output=False)
         
-        print(f"\n✅ 构建成功!")
+        print(f"\n构建成功!")
         
         # 创建完整的包结构
-        print(f"\n📦 创建完整包结构...")
+        print(f"\n创建完整包结构...")
         if create_package_structure():
-            print(f"\n✅ 完整包创建成功!")
+            print(f"\n完整包创建成功!")
             
             # 显示包信息
             package_dir = "dist/ocr_server_package"
@@ -415,12 +415,12 @@ def main():
                         file_count += 1
                 
                 size_mb = total_size / (1024 * 1024)
-                print(f"📦 包位置: {package_dir}")
-                print(f"📏 包大小: {size_mb:.1f} MB")
-                print(f"📄 文件数量: {file_count}")
+                print(f"包位置: {package_dir}")
+                print(f"包大小: {size_mb:.1f} MB")
+                print(f"文件数量: {file_count}")
                 
                 # 显示包内容
-                print(f"\n📋 包内容:")
+                print(f"\n包内容:")
                 for root, dirs, files in os.walk(package_dir):
                     level = root.replace(package_dir, '').count(os.sep)
                     indent = ' ' * 2 * level
@@ -429,17 +429,17 @@ def main():
                     for file in files:
                         print(f"{subindent}{file}")
             else:
-                print(f"❌ 包目录未找到: {package_dir}")
+                print(f"包目录未找到: {package_dir}")
         else:
-            print(f"❌ 包创建失败")
+            print(f"包创建失败")
             return 1
         
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ 构建失败: {e}")
+        print(f"\n构建失败: {e}")
         print(f"请检查错误信息并重试")
         return 1
     except Exception as e:
-        print(f"\n❌ 未知错误: {e}")
+        print(f"\n未知错误: {e}")
         return 1
     
     return 0
