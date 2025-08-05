@@ -8,6 +8,9 @@ OCR服务器启动入口
 import sys
 import os
 
+# 显式导入secrets模块，解决Windows下PyInstaller打包问题
+import secrets
+
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 

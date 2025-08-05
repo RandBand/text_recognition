@@ -82,38 +82,38 @@ jobs:
           
       - name: 构建可执行文件
         run: |
-          # 使用优化构建脚本
-          python build/scripts/build_optimized.py
+          # 使用通用构建脚本
+          python scripts/build_universal.py
           
-          # 重命名可执行文件
-          if [ -f "dist/packages/ocr_server" ]; then
+          # 复制完整包到构建目录
+          if [ -d "dist/ocr_server_package" ]; then
             mkdir -p build/${{ matrix.build-dir }}
-            cp dist/packages/ocr_server build/${{ matrix.build-dir }}/${{ matrix.exe-name }}
+            cp -r dist/ocr_server_package build/${{ matrix.build-dir }}/ocr_server_package
           fi
         if: matrix.os == 'macOS'
           
       - name: 构建可执行文件 (Windows)
         run: |
-          # 使用优化构建脚本
-          python build/scripts/build_optimized.py
+          # 使用通用构建脚本
+          python scripts/build_universal.py
           
-          # 重命名可执行文件
-          if (Test-Path "dist/packages/ocr_server.exe") {
+          # 复制完整包到构建目录
+          if (Test-Path "dist/ocr_server_package") {
             New-Item -ItemType Directory -Force -Path "build/${{ matrix.build-dir }}"
-            Copy-Item "dist/packages/ocr_server.exe" "build/${{ matrix.build-dir }}/${{ matrix.exe-name }}"
+            Copy-Item -Recurse "dist/ocr_server_package" "build/${{ matrix.build-dir }}/ocr_server_package"
           }
         if: matrix.os == 'Windows'
           
       - name: 创建发布包 (macOS)
         run: |
           cd build/${{ matrix.build-dir }}
-          tar -czf ${{ matrix.package-name }}_${{ github.event.inputs.version || github.ref_name }}.${{ matrix.package-ext }} ${{ matrix.exe-name }}
+          tar -czf ${{ matrix.package-name }}_${{ github.event.inputs.version || github.ref_name }}.${{ matrix.package-ext }} ocr_server_package
         if: matrix.os == 'macOS'
           
       - name: 创建发布包 (Windows)
         run: |
           cd build\${{ matrix.build-dir }}
-          powershell Compress-Archive -Path ${{ matrix.exe-name }} -DestinationPath ${{ matrix.package-name }}_${{ github.event.inputs.version || github.ref_name }}.${{ matrix.package-ext }}
+          powershell Compress-Archive -Path ocr_server_package -DestinationPath ${{ matrix.package-name }}_${{ github.event.inputs.version || github.ref_name }}.${{ matrix.package-ext }}
         if: matrix.os == 'Windows'
           
       - name: 上传构建产物
@@ -152,11 +152,23 @@ jobs:
             - **Windows x64** (Intel/AMD): `ocr_server_windows_x64_${{ github.ref_name }}.zip`
             - **Windows ARM64**: `ocr_server_windows_arm64_${{ github.ref_name }}.zip`
             
+            ### 包内容：
+            每个压缩包包含完整的OCR服务器，包括：
+            - 可执行文件
+            - 模型文件 (det.onnx, rec.onnx, ppocr_keys_v1.txt)
+            - 字体文件 (simfang.ttf)
+            - 示例图片
+            - 文档文件 (README.md, USAGE_GUIDE.md)
+            - 启动脚本 (start_server.bat/start_server.sh)
+            
             ### 使用说明：
             1. 下载对应平台的压缩包
             2. 解压到本地目录
-            3. 在命令行中运行可执行文件
+            3. 运行启动脚本：
+               - Windows: 双击 `start_server.bat`
+               - macOS/Linux: 运行 `./start_server.sh`
             4. 默认服务端口为5000
+            5. 访问 http://localhost:5000 查看API文档
             
             ### 构建信息：
             - Python版本: ${{ env.PYTHON_VERSION }}
