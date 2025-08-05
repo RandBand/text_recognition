@@ -32,8 +32,8 @@ jobs:
             package-ext: tar.gz
             
           - os: macOS
-            arch: x86_64
-            runs-on: macos-12
+            arch: AMD64
+            runs-on: macos-latest
             build-dir: macos-x86_64
             exe-name: ocr_server_x86_64
             package-name: ocr_server_macos_x86_64
