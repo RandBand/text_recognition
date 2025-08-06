@@ -33,7 +33,7 @@ jobs:
             
           - os: macOS
             arch: AMD64
-            runs-on: macos-latest
+            runs-on: macos-13
             build-dir: macos-x86_64
             exe-name: ocr_server_x86_64
             package-name: ocr_server_macos_x86_64
@@ -55,6 +55,15 @@ jobs:
             package-name: ocr_server_windows_arm64
             package-ext: zip
     steps:
+      - name: 查看系统架构
+        shell: bash
+        run: |
+          echo "=== 当前系统架构信息 ==="
+          echo "操作系统: $RUNNER_OS"
+          echo "架构: $RUNNER_ARCH"
+          echo "机器架构: $(uname -m)"
+          echo "完整系统信息: $(uname -a)"
+    
       - name: 检出代码
         uses: actions/checkout@v4
         
