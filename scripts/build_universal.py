@@ -521,6 +521,9 @@ else:
             f'runtime_hooks=[\'{runtime_hook_path}\'],'
         )
     
+    # 确保build/configs目录存在
+    os.makedirs('build/configs', exist_ok=True)
+    
     # 写入通用优化的spec文件
     with open('build/configs/ocr_server_universal.spec', 'w', encoding='utf-8') as f:
         f.write(spec_content)
