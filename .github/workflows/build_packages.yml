@@ -31,21 +31,21 @@ jobs:
           #   package-name: ocr_server_macos_arm64
           #   package-ext: tar.gz
             
-          - os: macOS
-            arch: AMD64
-            runs-on: macos-13
-            build-dir: macos-x86_64
-            exe-name: ocr_server_x86_64
-            package-name: ocr_server_macos_x86_64
-            package-ext: tar.gz
+          # - os: macOS
+          #   arch: AMD64
+          #   runs-on: macos-13
+          #   build-dir: macos-x86_64
+          #   exe-name: ocr_server_x86_64
+          #   package-name: ocr_server_macos_x86_64
+          #   package-ext: tar.gz
             
-          # - os: Windows
-          #   arch: x64
-          #   runs-on: windows-latest
-          #   build-dir: windows-x64
-          #   exe-name: ocr_server_x64.exe
-          #   package-name: ocr_server_windows_x64
-          #   package-ext: zip
+          - os: Windows
+            arch: x64
+            runs-on: windows-latest
+            build-dir: windows-x64
+            exe-name: ocr_server_x64.exe
+            package-name: ocr_server_windows_x64
+            package-ext: zip
             
           # - os: Windows
           #   arch: ARM64
