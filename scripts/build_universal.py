@@ -184,7 +184,41 @@ base_hiddenimports = [
     'PyInstaller',
     'PyInstaller.loader',
     'PyInstaller.loader.pyimod02_importers',
-    'PyInstaller.loader.pyiboot01_bootstrap'
+    'PyInstaller.loader.pyiboot01_bootstrap',
+    # 添加更多必要的模块
+    'numpy.random._common',
+    'numpy.random._bounded_integers',
+    'numpy.random._mt19937',
+    'numpy.random._pcg64',
+    'numpy.random._philox',
+    'numpy.random._sfc64',
+    'numpy.random._generator',
+    'numpy.core._multiarray_tests',
+    'numpy.core._dtype',
+    'numpy.core._methods',
+    'numpy.core._multiarray_umath',
+    'numpy.core._multiarray_scalars',
+    'numpy.core._string_helpers',
+    'numpy.core._asarray',
+    'numpy.core._shape_base',
+    'numpy.core._index_tricks',
+    'numpy.core._function_base',
+    'numpy.core._machar',
+    'numpy.core._getlimits',
+    'numpy.core._exceptions',
+    'numpy.core._methods',
+    'numpy.core._dtype_ctypes',
+    'numpy.core._internal',
+    'numpy.core._multiarray_umath',
+    'numpy.core._multiarray_scalars',
+    'numpy.core._string_helpers',
+    'numpy.core._asarray',
+    'numpy.core._shape_base',
+    'numpy.core._index_tricks',
+    'numpy.core._function_base',
+    'numpy.core._machar',
+    'numpy.core._getlimits',
+    'numpy.core._exceptions'
 ]
 
 # 平台特定配置
@@ -244,7 +278,33 @@ elif platform.system() == 'Darwin':  # macOS
         'numpy.random._philox',
         'numpy.random._sfc64',
         'numpy.random._generator',
-        'secrets'
+        'secrets',
+        # 添加更多macOS特定的模块
+        'numpy.core._multiarray_tests',
+        'numpy.core._dtype',
+        'numpy.core._methods',
+        'numpy.core._multiarray_umath',
+        'numpy.core._multiarray_scalars',
+        'numpy.core._string_helpers',
+        'numpy.core._asarray',
+        'numpy.core._shape_base',
+        'numpy.core._index_tricks',
+        'numpy.core._function_base',
+        'numpy.core._machar',
+        'numpy.core._getlimits',
+        'numpy.core._exceptions',
+        'numpy.core._dtype_ctypes',
+        'numpy.core._internal',
+        'numpy.core._multiarray_umath',
+        'numpy.core._multiarray_scalars',
+        'numpy.core._string_helpers',
+        'numpy.core._asarray',
+        'numpy.core._shape_base',
+        'numpy.core._index_tricks',
+        'numpy.core._function_base',
+        'numpy.core._machar',
+        'numpy.core._getlimits',
+        'numpy.core._exceptions'
     ]
     hiddenimports = base_hiddenimports + macos_extra_imports
 else:
@@ -331,8 +391,8 @@ exe = EXE(
 )
 '''
     
-    # 确保build/configs目录存在
-    os.makedirs('build/configs', exist_ok=True)
+        # 确保scripts目录存在
+    os.makedirs('scripts', exist_ok=True)
     
     # 创建macOS特定的运行时钩子
     if platform.system() == 'Darwin':
@@ -340,6 +400,27 @@ exe = EXE(
 # macOS运行时钩子 - 解决模块导入问题
 import sys
 import os
+
+# 设置环境变量
+os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
+
+# 等待PyInstaller引导程序完全初始化
+def wait_for_pyinstaller_init():
+    """等待PyInstaller引导程序完全初始化"""
+    import time
+    max_wait = 10  # 最多等待10秒
+    start_time = time.time()
+    
+    while time.time() - start_time < max_wait:
+        try:
+            # 检查PyInstaller引导程序是否已初始化
+            if hasattr(sys, '_pyinstaller_pyz'):
+                return True
+            time.sleep(0.1)
+        except Exception:
+            time.sleep(0.1)
+    
+    return False
 
 # 确保ipaddress模块可用
 try:
@@ -378,11 +459,59 @@ try:
 except ImportError:
     pass
 
-# 设置环境变量
-os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
+# 确保zipimport模块可用
+try:
+    import zipimport
+except ImportError:
+    pass
+
+# 确保其他必要的模块可用
+try:
+    import codecs
+    import locale
+    import builtins
+    import collections
+    import collections.abc
+    import typing
+    import importlib
+    import importlib.machinery
+    import importlib.util
+except ImportError:
+    pass
+
+# 修复sys.modules中的模块引用
+def fix_module_references():
+    """修复sys.modules中的模块引用"""
+    try:
+        # 确保ipaddress在sys.modules中
+        if 'ipaddress' not in sys.modules:
+            sys.modules['ipaddress'] = ipaddress
+        
+        # 确保其他必要模块在sys.modules中
+        for module_name in ['pathlib', 'urllib', 'urllib.parse', 'urllib.request', 
+                           'urllib.error', 'urllib.response', 'codecs', 'locale', 
+                           'builtins', 'collections', 'collections.abc', 'typing',
+                           'importlib', 'importlib.machinery', 'importlib.util', 'zipimport']:
+            if module_name not in sys.modules:
+                try:
+                    __import__(module_name)
+                except ImportError:
+                    pass
+    except Exception:
+        pass
+
+# 等待PyInstaller初始化完成后再执行修复
+if wait_for_pyinstaller_init():
+    fix_module_references()
+else:
+    # 如果等待超时，仍然尝试修复，但更小心
+    try:
+        fix_module_references()
+    except Exception:
+        pass
 '''
         
-        runtime_hook_path = 'build/configs/macos_runtime_hook.py'
+        runtime_hook_path = 'scripts/macos_runtime_hook.py'
         with open(runtime_hook_path, 'w', encoding='utf-8') as f:
             f.write(runtime_hook_content)
         
