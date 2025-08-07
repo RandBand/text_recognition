@@ -301,10 +301,6 @@ a = Analysis(
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False,
-    # macOS特定优化
-    datasource=[],
-    datasource_include_patterns=[],
-    datasource_exclude_patterns=[],
 )
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
