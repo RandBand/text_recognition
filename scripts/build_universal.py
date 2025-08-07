@@ -156,10 +156,38 @@ base_hiddenimports = [
     'copy',
     'random',
     'argparse',
-    'glob'
+    'glob',
+    # 添加缺失的模块
+    'ipaddress',
+    'pathlib',
+    'urllib',
+    'urllib.parse',
+    'urllib.request',
+    'urllib.error',
+    'urllib.response',
+    'codecs',
+    'locale',
+    'builtins',
+    'sys',
+    'os',
+    'platform',
+    'subprocess',
+    'shutil',
+    'collections',
+    'collections.abc',
+    'typing',
+    'typing_extensions',
+    'importlib',
+    'importlib.machinery',
+    'importlib.util',
+    'zipimport',
+    'PyInstaller',
+    'PyInstaller.loader',
+    'PyInstaller.loader.pyimod02_importers',
+    'PyInstaller.loader.pyiboot01_bootstrap'
 ]
 
-# Windows特定配置
+# 平台特定配置
 if is_windows:
     # Windows下需要额外的模块
     windows_extra_imports = [
@@ -176,6 +204,49 @@ if is_windows:
         'numpy.random._generator'
     ]
     hiddenimports = base_hiddenimports + windows_extra_imports
+elif platform.system() == 'Darwin':  # macOS
+    # macOS下需要额外的模块，特别是解决ipaddress和PyInstaller相关的问题
+    macos_extra_imports = [
+        'ipaddress',
+        'pathlib',
+        'urllib',
+        'urllib.parse',
+        'urllib.request',
+        'urllib.error',
+        'urllib.response',
+        'codecs',
+        'locale',
+        'builtins',
+        'sys',
+        'os',
+        'platform',
+        'subprocess',
+        'shutil',
+        'collections',
+        'collections.abc',
+        'typing',
+        'typing_extensions',
+        'importlib',
+        'importlib.machinery',
+        'importlib.util',
+        'zipimport',
+        'PyInstaller',
+        'PyInstaller.loader',
+        'PyInstaller.loader.pyimod02_importers',
+        'PyInstaller.loader.pyiboot01_bootstrap',
+        'numpy.random._pickle',
+        'numpy.random.mtrand',
+        'numpy.random.bit_generator',
+        'numpy.random._common',
+        'numpy.random._bounded_integers',
+        'numpy.random._mt19937',
+        'numpy.random._pcg64',
+        'numpy.random._philox',
+        'numpy.random._sfc64',
+        'numpy.random._generator',
+        'secrets'
+    ]
+    hiddenimports = base_hiddenimports + macos_extra_imports
 else:
     hiddenimports = base_hiddenimports
 
@@ -218,7 +289,7 @@ excludes = [
 
 a = Analysis(
     ['../../run_server.py'],
-    pathex=[],
+    pathex=['../../src', '../../'],
     binaries=[],
     datas=datas,
     hiddenimports=hiddenimports,
@@ -230,6 +301,10 @@ a = Analysis(
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False,
+    # macOS特定优化
+    datasource=[],
+    datasource_include_patterns=[],
+    datasource_exclude_patterns=[],
 )
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
@@ -243,7 +318,7 @@ exe = EXE(
     [],
     name='ocr_server',
     debug=False,
-    bootloader_ignore_signals=False,
+    bootloader_ignore_signals=True if platform.system() == 'Darwin' else False,
     strip={strip_available},  # 根据系统可用性决定
     upx={upx_available},      # 根据系统可用性决定
     upx_exclude=[],
@@ -254,11 +329,72 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    # macOS特定优化
+    icon=None,
+    version_file=None,
 )
 '''
     
     # 确保build/configs目录存在
     os.makedirs('build/configs', exist_ok=True)
+    
+    # 创建macOS特定的运行时钩子
+    if platform.system() == 'Darwin':
+        runtime_hook_content = '''
+# macOS运行时钩子 - 解决模块导入问题
+import sys
+import os
+
+# 确保ipaddress模块可用
+try:
+    import ipaddress
+except ImportError:
+    # 如果ipaddress不可用，创建一个简单的替代
+    class IPv4Address:
+        def __init__(self, address):
+            self.address = address
+        def __str__(self):
+            return self.address
+    
+    class IPv4Network:
+        def __init__(self, network):
+            self.network = network
+        def __str__(self):
+            return self.network
+    
+    class ipaddress:
+        IPv4Address = IPv4Address
+        IPv4Network = IPv4Network
+
+# 确保pathlib模块可用
+try:
+    import pathlib
+except ImportError:
+    pass
+
+# 确保urllib模块可用
+try:
+    import urllib
+    import urllib.parse
+    import urllib.request
+    import urllib.error
+    import urllib.response
+except ImportError:
+    pass
+
+# 设置环境变量
+os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
+'''
+        
+        runtime_hook_path = 'build/configs/macos_runtime_hook.py'
+        with open(runtime_hook_path, 'w', encoding='utf-8') as f:
+            f.write(runtime_hook_content)
+        
+        # 更新spec文件中的runtime_hooks
+        spec_content = spec_content.replace(
+            'runtime_hooks=[],',
+            f'runtime_hooks=[\'{runtime_hook_path}\'],'
+        )
     
     # 写入通用优化的spec文件
     with open('build/configs/ocr_server_universal.spec', 'w', encoding='utf-8') as f:
@@ -340,16 +476,17 @@ def create_startup_scripts(package_dir, exe_name):
     # Windows批处理文件
     if platform.system() == 'Windows':
         bat_content = f'''@echo off
+chcp 65001 >nul
 echo OCR服务器启动中...
-echo 默认端口: 5000
-echo 访问地址: http://localhost:5000
+echo 默认端口: 8080 (自动分配)
+echo 访问地址: http://localhost:8080
 echo.
 echo 按 Ctrl+C 停止服务器
 echo.
 {exe_name} --help
 echo.
-echo 启动服务器...
-{exe_name}
+echo 启动服务器 (自动分配端口)...
+{exe_name} --auto-port
 pause
 '''
         with open(f"{package_dir}/start_server.bat", 'w', encoding='utf-8') as f:
@@ -359,15 +496,15 @@ pause
     # Unix/Linux/macOS shell脚本
     shell_content = f'''#!/bin/bash
 echo "OCR服务器启动中..."
-echo "默认端口: 5000"
-echo "访问地址: http://localhost:5000"
+echo "默认端口: 8080 (自动分配)"
+echo "访问地址: http://localhost:8080"
 echo ""
 echo "按 Ctrl+C 停止服务器"
 echo ""
 ./{exe_name} --help
 echo ""
-echo "启动服务器..."
-./{exe_name}
+echo "启动服务器 (自动分配端口)..."
+./{exe_name} --auto-port
 '''
     with open(f"{package_dir}/start_server.sh", 'w', encoding='utf-8') as f:
         f.write(shell_content)
